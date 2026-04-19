@@ -469,18 +469,14 @@ fn render_qt_colors(palette: &Palette) -> String {
 }
 
 fn render_wezterm_theme(palette: &Palette) -> String {
+    let terminal = palette.terminal_palette();
     let base00 = palette.color("base00");
     let base01 = palette.color("base01");
+    let base02 = palette.color("base02");
     let base03 = palette.color("base03");
     let base05 = palette.color("base05");
     let base07 = palette.color("base07");
-    let base08 = palette.color("base08");
     let base09 = palette.color("base09");
-    let base0a = palette.color("base0A");
-    let base0b = palette.color("base0B");
-    let base0c = palette.color("base0C");
-    let base0d = palette.color("base0D");
-    let base0e = palette.color("base0E");
 
     format!(
         concat!(
@@ -488,25 +484,25 @@ fn render_wezterm_theme(palette: &Palette) -> String {
             "  color_scheme = \"walbridge\",\n",
             "  color_schemes = {{\n",
             "    walbridge = {{\n",
-            "      ansi = {{ \"{base00}\", \"{base08}\", \"{base0B}\", \"{base0A}\", \"{base0D}\", \"{base0E}\", \"{base0C}\", \"{base05}\" }},\n",
-            "      brights = {{ \"{base03}\", \"{base08}\", \"{base0B}\", \"{base0A}\", \"{base0D}\", \"{base0E}\", \"{base0C}\", \"{base07}\" }},\n",
+            "      ansi = {{ \"{ansi0}\", \"{ansi1}\", \"{ansi2}\", \"{ansi3}\", \"{ansi4}\", \"{ansi5}\", \"{ansi6}\", \"{ansi7}\" }},\n",
+            "      brights = {{ \"{bright0}\", \"{bright1}\", \"{bright2}\", \"{bright3}\", \"{bright4}\", \"{bright5}\", \"{bright6}\", \"{bright7}\" }},\n",
             "      background = \"{base00}\",\n",
             "      cursor_bg = \"{base05}\",\n",
             "      cursor_fg = \"{base00}\",\n",
             "      compose_cursor = \"{base07}\",\n",
             "      foreground = \"{base05}\",\n",
             "      scrollbar_thumb = \"{base01}\",\n",
-            "      selection_bg = \"{base02}\",\n",
+            "      selection_bg = \"{base03}\",\n",
             "      selection_fg = \"{base05}\",\n",
             "      split = \"{base03}\",\n",
             "      visual_bell = \"{base09}\",\n",
             "      tab_bar = {{\n",
             "        background = \"{base01}\",\n",
             "        inactive_tab_edge = \"{base01}\",\n",
-            "        active_tab = {{ bg_color = \"{base00}\", fg_color = \"{base05}\" }},\n",
-            "        inactive_tab = {{ bg_color = \"{base03}\", fg_color = \"{base05}\" }},\n",
+            "        active_tab = {{ bg_color = \"{base02}\", fg_color = \"{base05}\" }},\n",
+            "        inactive_tab = {{ bg_color = \"{base00}\", fg_color = \"{base04}\" }},\n",
             "        inactive_tab_hover = {{ bg_color = \"{base05}\", fg_color = \"{base00}\" }},\n",
-            "        new_tab = {{ bg_color = \"{base03}\", fg_color = \"{base05}\" }},\n",
+            "        new_tab = {{ bg_color = \"{base01}\", fg_color = \"{base05}\" }},\n",
             "        new_tab_hover = {{ bg_color = \"{base05}\", fg_color = \"{base00}\" }},\n",
             "      }},\n",
             "    }},\n",
@@ -531,10 +527,10 @@ fn render_wezterm_theme(palette: &Palette) -> String {
             "    tab_bar = {{\n",
             "      background = \"{base01}\",\n",
             "      inactive_tab_edge = \"{base01}\",\n",
-            "      active_tab = {{ bg_color = \"{base00}\", fg_color = \"{base05}\" }},\n",
-            "      inactive_tab = {{ bg_color = \"{base03}\", fg_color = \"{base05}\" }},\n",
+            "      active_tab = {{ bg_color = \"{base02}\", fg_color = \"{base05}\" }},\n",
+            "      inactive_tab = {{ bg_color = \"{base00}\", fg_color = \"{base04}\" }},\n",
             "      inactive_tab_hover = {{ bg_color = \"{base05}\", fg_color = \"{base00}\" }},\n",
-            "      new_tab = {{ bg_color = \"{base03}\", fg_color = \"{base05}\" }},\n",
+            "      new_tab = {{ bg_color = \"{base01}\", fg_color = \"{base05}\" }},\n",
             "      new_tab_hover = {{ bg_color = \"{base05}\", fg_color = \"{base00}\" }},\n",
             "    }},\n",
             "  }},\n",
@@ -544,21 +540,33 @@ fn render_wezterm_theme(palette: &Palette) -> String {
         ),
         base00 = base00.hashtag(),
         base01 = base01.hashtag(),
-        base02 = palette.color("base02").hashtag(),
+        base02 = base02.hashtag(),
         base03 = base03.hashtag(),
+        base04 = palette.color("base04").hashtag(),
         base05 = base05.hashtag(),
         base07 = base07.hashtag(),
-        base08 = base08.hashtag(),
         base09 = base09.hashtag(),
-        base0A = base0a.hashtag(),
-        base0B = base0b.hashtag(),
-        base0C = base0c.hashtag(),
-        base0D = base0d.hashtag(),
-        base0E = base0e.hashtag(),
+        ansi0 = terminal.normal[0].hashtag(),
+        ansi1 = terminal.normal[1].hashtag(),
+        ansi2 = terminal.normal[2].hashtag(),
+        ansi3 = terminal.normal[3].hashtag(),
+        ansi4 = terminal.normal[4].hashtag(),
+        ansi5 = terminal.normal[5].hashtag(),
+        ansi6 = terminal.normal[6].hashtag(),
+        ansi7 = terminal.normal[7].hashtag(),
+        bright0 = terminal.bright[0].hashtag(),
+        bright1 = terminal.bright[1].hashtag(),
+        bright2 = terminal.bright[2].hashtag(),
+        bright3 = terminal.bright[3].hashtag(),
+        bright4 = terminal.bright[4].hashtag(),
+        bright5 = terminal.bright[5].hashtag(),
+        bright6 = terminal.bright[6].hashtag(),
+        bright7 = terminal.bright[7].hashtag(),
     )
 }
 
 fn render_starship_config(template: &str, palette: &Palette) -> String {
+    let terminal = palette.terminal_palette();
     let template = template.replace("palette = \"base16\"", "palette = \"walbridge\"");
     let mut result = String::new();
     let mut skipping_palette = false;
@@ -608,17 +616,17 @@ fn render_starship_config(template: &str, palette: &Palette) -> String {
             "base15 = \"#{base0C}\"\n",
             "base16 = \"#{base0D}\"\n",
             "base17 = \"#{base0E}\"\n",
-            "black = \"#{base00}\"\n",
+            "black = \"#{black}\"\n",
             "blue = \"#{base0D}\"\n",
-            "bright-black = \"#{base03}\"\n",
-            "bright-blue = \"#{base0D}\"\n",
-            "bright-cyan = \"#{base0C}\"\n",
-            "bright-green = \"#{base0B}\"\n",
-            "bright-magenta = \"#{base0E}\"\n",
-            "bright-purple = \"#{base0E}\"\n",
-            "bright-red = \"#{base08}\"\n",
-            "bright-white = \"#{base07}\"\n",
-            "bright-yellow = \"#{base0A}\"\n",
+            "bright-black = \"#{bright_black}\"\n",
+            "bright-blue = \"#{bright_blue}\"\n",
+            "bright-cyan = \"#{bright_cyan}\"\n",
+            "bright-green = \"#{bright_green}\"\n",
+            "bright-magenta = \"#{bright_magenta}\"\n",
+            "bright-purple = \"#{bright_magenta}\"\n",
+            "bright-red = \"#{bright_red}\"\n",
+            "bright-white = \"#{bright_white}\"\n",
+            "bright-yellow = \"#{bright_yellow}\"\n",
             "brown = \"#{base0F}\"\n",
             "cyan = \"#{base0C}\"\n",
             "green = \"#{base0B}\"\n",
@@ -626,7 +634,7 @@ fn render_starship_config(template: &str, palette: &Palette) -> String {
             "orange = \"#{base09}\"\n",
             "purple = \"#{base0E}\"\n",
             "red = \"#{base08}\"\n",
-            "white = \"#{base05}\"\n",
+            "white = \"#{white}\"\n",
             "yellow = \"#{base0A}\"\n"
         ),
         base00 = palette.color("base00").hex(),
@@ -645,6 +653,16 @@ fn render_starship_config(template: &str, palette: &Palette) -> String {
         base0D = palette.color("base0D").hex(),
         base0E = palette.color("base0E").hex(),
         base0F = palette.color("base0F").hex(),
+        black = terminal.normal[0].hex(),
+        white = terminal.normal[7].hex(),
+        bright_black = terminal.bright[0].hex(),
+        bright_red = terminal.bright[1].hex(),
+        bright_green = terminal.bright[2].hex(),
+        bright_yellow = terminal.bright[3].hex(),
+        bright_blue = terminal.bright[4].hex(),
+        bright_magenta = terminal.bright[5].hex(),
+        bright_cyan = terminal.bright[6].hex(),
+        bright_white = terminal.bright[7].hex(),
     ));
 
     result
@@ -697,17 +715,11 @@ fn render_fish_theme(palette: &Palette) -> String {
 }
 
 fn render_ghostty_theme(palette: &Palette) -> String {
+    let terminal = palette.terminal_palette();
     let base00 = palette.color("base00");
-    let base02 = palette.color("base02");
     let base03 = palette.color("base03");
     let base05 = palette.color("base05");
     let base07 = palette.color("base07");
-    let base08 = palette.color("base08");
-    let base0a = palette.color("base0A");
-    let base0b = palette.color("base0B");
-    let base0c = palette.color("base0C");
-    let base0d = palette.color("base0D");
-    let base0e = palette.color("base0E");
 
     format!(
         concat!(
@@ -716,38 +728,44 @@ fn render_ghostty_theme(palette: &Palette) -> String {
             "cursor-color = {cursor}\n",
             "selection-background = {selection_bg}\n",
             "selection-foreground = {selection_fg}\n",
-            "palette = 0={base00}\n",
-            "palette = 1={base08}\n",
-            "palette = 2={base0B}\n",
-            "palette = 3={base0A}\n",
-            "palette = 4={base0D}\n",
-            "palette = 5={base0E}\n",
-            "palette = 6={base0C}\n",
-            "palette = 7={base05}\n",
-            "palette = 8={base03}\n",
-            "palette = 9={base08}\n",
-            "palette = 10={base0B}\n",
-            "palette = 11={base0A}\n",
-            "palette = 12={base0D}\n",
-            "palette = 13={base0E}\n",
-            "palette = 14={base0C}\n",
-            "palette = 15={base07}\n"
+            "palette = 0={ansi0}\n",
+            "palette = 1={ansi1}\n",
+            "palette = 2={ansi2}\n",
+            "palette = 3={ansi3}\n",
+            "palette = 4={ansi4}\n",
+            "palette = 5={ansi5}\n",
+            "palette = 6={ansi6}\n",
+            "palette = 7={ansi7}\n",
+            "palette = 8={bright0}\n",
+            "palette = 9={bright1}\n",
+            "palette = 10={bright2}\n",
+            "palette = 11={bright3}\n",
+            "palette = 12={bright4}\n",
+            "palette = 13={bright5}\n",
+            "palette = 14={bright6}\n",
+            "palette = 15={bright7}\n"
         ),
         background = base00.hex(),
         foreground = base05.hex(),
-        cursor = base05.hex(),
-        selection_bg = base02.hex(),
+        cursor = base07.hex(),
+        selection_bg = base03.hex(),
         selection_fg = base05.hex(),
-        base00 = base00.hex(),
-        base03 = base03.hex(),
-        base05 = base05.hex(),
-        base07 = base07.hex(),
-        base08 = base08.hex(),
-        base0A = base0a.hex(),
-        base0B = base0b.hex(),
-        base0C = base0c.hex(),
-        base0D = base0d.hex(),
-        base0E = base0e.hex(),
+        ansi0 = terminal.normal[0].hex(),
+        ansi1 = terminal.normal[1].hex(),
+        ansi2 = terminal.normal[2].hex(),
+        ansi3 = terminal.normal[3].hex(),
+        ansi4 = terminal.normal[4].hex(),
+        ansi5 = terminal.normal[5].hex(),
+        ansi6 = terminal.normal[6].hex(),
+        ansi7 = terminal.normal[7].hex(),
+        bright0 = terminal.bright[0].hex(),
+        bright1 = terminal.bright[1].hex(),
+        bright2 = terminal.bright[2].hex(),
+        bright3 = terminal.bright[3].hex(),
+        bright4 = terminal.bright[4].hex(),
+        bright5 = terminal.bright[5].hex(),
+        bright6 = terminal.bright[6].hex(),
+        bright7 = terminal.bright[7].hex(),
     )
 }
 

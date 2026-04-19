@@ -95,6 +95,10 @@ impl Color {
         )
     }
 
+    pub fn darken(self, ratio: f32) -> Self {
+        self.mix(Color { r: 0, g: 0, b: 0 }, ratio)
+    }
+
     pub fn to_hsl(self) -> (f32, f32, f32) {
         let r = self.r as f32 / 255.0;
         let g = self.g as f32 / 255.0;
@@ -156,6 +160,19 @@ impl Color {
 
         0.2126 * channel(self.r) + 0.7152 * channel(self.g) + 0.0722 * channel(self.b)
     }
+
+    pub fn contrast_ratio(self, other: Color) -> f32 {
+        let l1 = self.luminance();
+        let l2 = other.luminance();
+        let (lighter, darker) = if l1 >= l2 { (l1, l2) } else { (l2, l1) };
+        (lighter + 0.05) / (darker + 0.05)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct TerminalPalette {
+    pub normal: [Color; 8],
+    pub bright: [Color; 8],
 }
 
 #[derive(Debug)]
@@ -179,23 +196,44 @@ impl Palette {
         let foreground = Color::parse(&parsed.special.foreground)?;
         let cursor = Color::parse(&parsed.special.cursor)?;
         let dark_background = background.luminance() < 0.3;
+        let accent_seeds = [
+            Color::parse(&parsed.colors.color1)?,
+            Color::parse(&parsed.colors.color2)?,
+            Color::parse(&parsed.colors.color3)?,
+            Color::parse(&parsed.colors.color4)?,
+            Color::parse(&parsed.colors.color5)?,
+            Color::parse(&parsed.colors.color6)?,
+            Color::parse(&parsed.colors.color9)?,
+            Color::parse(&parsed.colors.color10)?,
+            Color::parse(&parsed.colors.color11)?,
+            Color::parse(&parsed.colors.color12)?,
+            Color::parse(&parsed.colors.color13)?,
+            Color::parse(&parsed.colors.color14)?,
+        ];
+        let neutral_ramp = derive_neutral_ramp(
+            background,
+            foreground,
+            accent_anchor(&accent_seeds, background),
+            dark_background,
+        );
 
         let mut base16 = BTreeMap::new();
-        base16.insert("base00", background);
-        base16.insert("base01", background.lighten(0.05));
-        base16.insert("base02", background.lighten(0.11));
-        base16.insert("base03", background.lighten(0.2));
-        base16.insert("base04", foreground.mix(background, 0.25));
-        base16.insert("base05", foreground);
-        base16.insert("base06", foreground.lighten(0.08));
-        base16.insert("base07", foreground.lighten(0.16));
+        base16.insert("base00", neutral_ramp[0]);
+        base16.insert("base01", neutral_ramp[1]);
+        base16.insert("base02", neutral_ramp[2]);
+        base16.insert("base03", neutral_ramp[3]);
+        base16.insert("base04", neutral_ramp[4]);
+        base16.insert("base05", neutral_ramp[5]);
+        base16.insert("base06", neutral_ramp[6]);
+        base16.insert("base07", neutral_ramp[7]);
         base16.insert(
             "base08",
             semantic_accent(
                 Color::parse(&parsed.colors.color1)?,
                 dark_background,
                 350.0,
-                0.64,
+                0.72,
+                0.73,
             ),
         );
         base16.insert(
@@ -204,7 +242,8 @@ impl Palette {
                 Color::parse(&parsed.colors.color9)?,
                 dark_background,
                 28.0,
-                0.70,
+                0.78,
+                0.72,
             ),
         );
         base16.insert(
@@ -213,7 +252,8 @@ impl Palette {
                 Color::parse(&parsed.colors.color3)?,
                 dark_background,
                 55.0,
-                0.68,
+                0.76,
+                0.78,
             ),
         );
         base16.insert(
@@ -221,8 +261,9 @@ impl Palette {
             semantic_accent(
                 Color::parse(&parsed.colors.color2)?,
                 dark_background,
-                145.0,
-                0.60,
+                135.0,
+                0.58,
+                0.74,
             ),
         );
         base16.insert(
@@ -230,8 +271,9 @@ impl Palette {
             semantic_accent(
                 Color::parse(&parsed.colors.color6)?,
                 dark_background,
-                190.0,
-                0.66,
+                182.0,
+                0.60,
+                0.74,
             ),
         );
         base16.insert(
@@ -239,8 +281,9 @@ impl Palette {
             semantic_accent(
                 Color::parse(&parsed.colors.color4)?,
                 dark_background,
-                220.0,
-                0.64,
+                218.0,
+                0.82,
+                0.75,
             ),
         );
         base16.insert(
@@ -248,8 +291,9 @@ impl Palette {
             semantic_accent(
                 Color::parse(&parsed.colors.color5)?,
                 dark_background,
-                280.0,
-                0.70,
+                268.0,
+                0.78,
+                0.78,
             ),
         );
         base16.insert(
@@ -257,8 +301,9 @@ impl Palette {
             semantic_accent(
                 Color::parse(&parsed.colors.color11)?,
                 dark_background,
-                18.0,
-                0.74,
+                12.0,
+                0.58,
+                0.80,
             ),
         );
 
@@ -268,8 +313,8 @@ impl Palette {
                 .unwrap_or_else(|| format!("{}-{}", parsed.wallpaper, background.hex())),
             wallpaper: parsed.wallpaper,
             cursor,
-            background,
-            foreground,
+            background: neutral_ramp[0],
+            foreground: neutral_ramp[5],
             base16,
         })
     }
@@ -280,6 +325,7 @@ impl Palette {
 
     pub fn render_context(&self) -> BTreeMap<String, String> {
         let mut ctx = BTreeMap::new();
+        let terminal = self.terminal_palette();
 
         for key in [
             "base00", "base01", "base02", "base03", "base04", "base05", "base06", "base07",
@@ -294,7 +340,54 @@ impl Palette {
         ctx.insert("cursor-hex".into(), self.cursor.hex());
         ctx.insert("background-hex".into(), self.background.hex());
         ctx.insert("foreground-hex".into(), self.foreground.hex());
+        ctx.insert("terminal-black-hex".into(), terminal.normal[0].hex());
+        ctx.insert("terminal-red-hex".into(), terminal.normal[1].hex());
+        ctx.insert("terminal-green-hex".into(), terminal.normal[2].hex());
+        ctx.insert("terminal-yellow-hex".into(), terminal.normal[3].hex());
+        ctx.insert("terminal-blue-hex".into(), terminal.normal[4].hex());
+        ctx.insert("terminal-magenta-hex".into(), terminal.normal[5].hex());
+        ctx.insert("terminal-cyan-hex".into(), terminal.normal[6].hex());
+        ctx.insert("terminal-white-hex".into(), terminal.normal[7].hex());
+        ctx.insert("terminal-bright-black-hex".into(), terminal.bright[0].hex());
+        ctx.insert("terminal-bright-red-hex".into(), terminal.bright[1].hex());
+        ctx.insert("terminal-bright-green-hex".into(), terminal.bright[2].hex());
+        ctx.insert(
+            "terminal-bright-yellow-hex".into(),
+            terminal.bright[3].hex(),
+        );
+        ctx.insert("terminal-bright-blue-hex".into(), terminal.bright[4].hex());
+        ctx.insert(
+            "terminal-bright-magenta-hex".into(),
+            terminal.bright[5].hex(),
+        );
+        ctx.insert("terminal-bright-cyan-hex".into(), terminal.bright[6].hex());
+        ctx.insert("terminal-bright-white-hex".into(), terminal.bright[7].hex());
         ctx
+    }
+
+    pub fn terminal_palette(&self) -> TerminalPalette {
+        TerminalPalette {
+            normal: [
+                self.color("base01"),
+                self.color("base08"),
+                self.color("base0B"),
+                self.color("base0A"),
+                self.color("base0D"),
+                self.color("base0E"),
+                self.color("base0C"),
+                self.color("base04").mix(self.color("base05"), 0.35),
+            ],
+            bright: [
+                self.color("base03"),
+                terminal_bright(self.color("base08")),
+                terminal_bright(self.color("base0B")),
+                terminal_bright(self.color("base0A")),
+                terminal_bright(self.color("base0D")),
+                terminal_bright(self.color("base0E")),
+                terminal_bright(self.color("base0C")),
+                self.color("base06"),
+            ],
+        }
     }
 }
 
@@ -302,27 +395,136 @@ fn semantic_accent(
     color: Color,
     dark_background: bool,
     target_hue: f32,
+    target_saturation: f32,
     target_lightness: f32,
 ) -> Color {
     let (hue, saturation, lightness) = color.to_hsl();
-    let min_saturation = if dark_background { 0.40 } else { 0.34 };
+    let hue_ratio = if saturation < 0.18 { 0.96 } else { 0.86 };
+    let adjusted_hue = blend_hue(hue, target_hue, hue_ratio);
+    let adjusted_saturation =
+        mix_value(saturation, target_saturation, 0.68).clamp(target_saturation * 0.88, 0.96);
     let adjusted_lightness = if dark_background {
-        lightness.max(target_lightness)
+        mix_value(lightness, target_lightness, 0.82)
+            .clamp(target_lightness - 0.06, target_lightness + 0.03)
     } else {
-        lightness.min(target_lightness)
+        mix_value(lightness, target_lightness, 0.74)
+            .clamp(target_lightness - 0.03, target_lightness + 0.08)
     };
-    let adjusted_hue = blend_hue(hue, target_hue, 0.78);
 
-    Color::from_hsl(
-        adjusted_hue,
-        saturation.max(min_saturation),
-        adjusted_lightness,
-    )
+    Color::from_hsl(adjusted_hue, adjusted_saturation, adjusted_lightness)
 }
 
 fn blend_hue(source: f32, target: f32, ratio: f32) -> f32 {
     let delta = ((target - source + 540.0).rem_euclid(360.0)) - 180.0;
     (source + delta * ratio).rem_euclid(360.0)
+}
+
+fn mix_value(source: f32, target: f32, ratio: f32) -> f32 {
+    (source * (1.0 - ratio)) + (target * ratio)
+}
+
+fn accent_anchor(colors: &[Color], fallback: Color) -> Color {
+    colors
+        .iter()
+        .copied()
+        .max_by(|left, right| color_weight(*left).total_cmp(&color_weight(*right)))
+        .unwrap_or(fallback)
+}
+
+fn color_weight(color: Color) -> f32 {
+    let (_, saturation, lightness) = color.to_hsl();
+    saturation * 1.8 + lightness * 0.35
+}
+
+fn harmonized_surface(
+    background: Color,
+    hue: f32,
+    saturation: f32,
+    lightness: f32,
+    ratio: f32,
+) -> Color {
+    background.mix(Color::from_hsl(hue, saturation, lightness), ratio)
+}
+
+fn derive_neutral_ramp(
+    background: Color,
+    foreground: Color,
+    anchor: Color,
+    dark_background: bool,
+) -> [Color; 8] {
+    let (bg_h, bg_s, bg_l) = background.to_hsl();
+    let (anchor_h, anchor_s, _) = anchor.to_hsl();
+    let neutral_hue = blend_hue(bg_h, anchor_h, if dark_background { 0.68 } else { 0.42 });
+    let neutral_saturation = if dark_background {
+        mix_value(bg_s, anchor_s.min(0.48), 0.28).clamp(0.10, 0.24)
+    } else {
+        mix_value(bg_s, anchor_s.min(0.30), 0.18).clamp(0.04, 0.12)
+    };
+
+    if dark_background {
+        let base00 = harmonized_surface(
+            background,
+            neutral_hue,
+            neutral_saturation,
+            bg_l.max(0.08).min(0.11),
+            0.36,
+        )
+        .darken(0.03);
+        let base01 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.14, 0.52);
+        let base02 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.19, 0.68);
+        let base03 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.31, 0.84);
+        let target_foreground = Color::from_hsl(
+            neutral_hue,
+            (neutral_saturation * 0.48).clamp(0.05, 0.14),
+            0.84,
+        );
+        let mut base05 = foreground.mix(target_foreground, 0.44);
+        if base05.contrast_ratio(base00) < 7.2 {
+            base05 = target_foreground;
+        }
+
+        [
+            base00,
+            base01,
+            base02,
+            base03,
+            base03.mix(base05, 0.28),
+            base05,
+            base05.lighten(0.08),
+            base05.lighten(0.16),
+        ]
+    } else {
+        let base00 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.97, 0.52);
+        let base01 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.93, 0.48);
+        let base02 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.88, 0.42);
+        let base03 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.72, 0.30);
+        let target_foreground = Color::from_hsl(
+            neutral_hue,
+            (neutral_saturation * 0.72).clamp(0.05, 0.18),
+            0.24,
+        );
+        let base05 = foreground.mix(target_foreground, 0.36);
+
+        [
+            base00,
+            base01,
+            base02,
+            base03,
+            base03.mix(base05, 0.34),
+            base05,
+            base05.darken(0.08),
+            base05.darken(0.16),
+        ]
+    }
+}
+
+fn terminal_bright(color: Color) -> Color {
+    let (hue, saturation, lightness) = color.to_hsl();
+    Color::from_hsl(
+        hue,
+        (saturation * 1.08).clamp(0.52, 0.96),
+        (lightness + 0.05).clamp(0.0, 0.86),
+    )
 }
 
 pub fn render_template(template: &str, values: &BTreeMap<String, String>) -> String {

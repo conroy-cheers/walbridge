@@ -2,49 +2,127 @@
   "name": "Walbridge",
   "type": "dark",
   "colors": {
-    "editor.background": "#{{base00-hex}}",
-    "editor.foreground": "#{{base05-hex}}",
-    "editorLineNumber.foreground": "#{{base03-hex}}",
-    "editorLineNumber.activeForeground": "#{{base05-hex}}",
-    "editorCursor.foreground": "#{{base05-hex}}",
-    "editor.selectionBackground": "#{{base02-hex}}",
-    "editor.inactiveSelectionBackground": "#{{base01-hex}}",
-    "editorIndentGuide.background1": "#{{base01-hex}}",
-    "editorIndentGuide.activeBackground1": "#{{base03-hex}}",
-    "activityBar.background": "#{{base01-hex}}",
-    "activityBar.foreground": "#{{base05-hex}}",
+    "focusBorder": "#{{base0D-hex}}",
+    "foreground": "#{{base05-hex}}",
+    "disabledForeground": "#{{base04-hex}}",
+    "widget.shadow": "#{{base00-hex}}99",
+    "selection.background": "#{{base0D-hex}}44",
+    "descriptionForeground": "#{{base05-hex}}",
+    "errorForeground": "#{{base08-hex}}",
+    "icon.foreground": "#{{base0D-hex}}",
+    "textLink.foreground": "#{{base0D-hex}}",
+    "textLink.activeForeground": "#{{base0C-hex}}",
+    "activityBar.background": "#{{base00-hex}}",
+    "activityBar.foreground": "#{{base0D-hex}}",
+    "activityBar.inactiveForeground": "#{{base03-hex}}",
     "activityBarBadge.background": "#{{base0D-hex}}",
     "activityBarBadge.foreground": "#{{base00-hex}}",
+    "badge.background": "#{{base03-hex}}",
+    "badge.foreground": "#{{base05-hex}}",
+    "breadcrumb.background": "#{{base02-hex}}",
+    "breadcrumb.foreground": "#{{base04-hex}}",
+    "breadcrumb.activeSelectionForeground": "#{{base06-hex}}",
+    "button.background": "#{{base0D-hex}}",
+    "button.foreground": "#{{base00-hex}}",
+    "button.hoverBackground": "#{{terminal-bright-blue-hex}}",
+    "button.secondaryBackground": "#{{base03-hex}}",
+    "button.secondaryForeground": "#{{base05-hex}}",
+    "button.secondaryHoverBackground": "#{{base04-hex}}",
+    "checkbox.background": "#{{base02-hex}}",
+    "checkbox.foreground": "#{{base0D-hex}}",
+    "dropdown.background": "#{{base00-hex}}",
+    "dropdown.foreground": "#{{base05-hex}}",
+    "dropdown.border": "#{{base03-hex}}",
+    "editor.background": "#{{base02-hex}}",
+    "editor.foreground": "#{{base05-hex}}",
+    "editorCursor.foreground": "#{{base06-hex}}",
+    "editorLineNumber.foreground": "#{{base03-hex}}",
+    "editorLineNumber.activeForeground": "#{{base05-hex}}",
+    "editor.lineHighlightBackground": "#{{base01-hex}}88",
+    "editor.selectionBackground": "#{{base0D-hex}}30",
+    "editor.inactiveSelectionBackground": "#{{base03-hex}}80",
+    "editorIndentGuide.background1": "#{{base01-hex}}",
+    "editorIndentGuide.activeBackground1": "#{{base03-hex}}",
+    "editorGroupHeader.tabsBackground": "#{{base00-hex}}",
+    "editorWidget.background": "#{{base01-hex}}",
+    "editorWidget.border": "#{{base03-hex}}",
+    "input.background": "#{{base00-hex}}",
+    "input.foreground": "#{{base05-hex}}",
+    "input.border": "#{{base03-hex}}",
+    "input.placeholderForeground": "#{{base04-hex}}",
+    "list.activeSelectionBackground": "#{{base02-hex}}",
+    "list.activeSelectionForeground": "#{{base05-hex}}",
+    "list.hoverBackground": "#{{base02-hex}}bb",
+    "list.hoverForeground": "#{{base06-hex}}",
+    "list.inactiveSelectionBackground": "#{{base01-hex}}",
+    "list.inactiveSelectionForeground": "#{{base05-hex}}",
+    "menu.background": "#{{base00-hex}}",
+    "menu.foreground": "#{{base05-hex}}",
+    "menu.selectionBackground": "#{{base02-hex}}",
+    "menu.selectionForeground": "#{{base05-hex}}",
+    "minimap.selectionHighlight": "#{{base0D-hex}}44",
+    "minimapGutter.addedBackground": "#{{base0B-hex}}",
+    "minimapGutter.modifiedBackground": "#{{base0D-hex}}",
+    "minimapGutter.deletedBackground": "#{{base08-hex}}",
+    "notificationCenterHeader.background": "#{{base00-hex}}",
+    "notifications.background": "#{{base01-hex}}",
+    "notifications.foreground": "#{{base05-hex}}",
+    "panel.background": "#{{base02-hex}}",
+    "panel.border": "#{{base03-hex}}",
+    "panelTitle.activeBorder": "#{{base0D-hex}}",
+    "panelTitle.activeForeground": "#{{base06-hex}}",
+    "panelTitle.inactiveForeground": "#{{base04-hex}}",
+    "peekView.border": "#{{base0D-hex}}",
+    "peekViewEditor.background": "#{{base01-hex}}",
+    "peekViewResult.background": "#{{base00-hex}}",
+    "peekViewTitle.background": "#{{base01-hex}}",
+    "scrollbarSlider.background": "#{{base03-hex}}66",
+    "scrollbarSlider.hoverBackground": "#{{base03-hex}}99",
+    "scrollbarSlider.activeBackground": "#{{base04-hex}}99",
     "sideBar.background": "#{{base01-hex}}",
     "sideBar.foreground": "#{{base05-hex}}",
-    "titleBar.activeBackground": "#{{base01-hex}}",
-    "titleBar.activeForeground": "#{{base05-hex}}",
-    "titleBar.inactiveBackground": "#{{base00-hex}}",
+    "sideBarTitle.foreground": "#{{base06-hex}}",
+    "sideBarSectionHeader.background": "#{{base00-hex}}",
+    "sideBarSectionHeader.foreground": "#{{base06-hex}}",
+    "sideBar.border": "#{{base00-hex}}",
     "statusBar.background": "#{{base01-hex}}",
     "statusBar.foreground": "#{{base05-hex}}",
     "statusBar.debuggingBackground": "#{{base08-hex}}",
     "statusBar.debuggingForeground": "#{{base00-hex}}",
-    "panel.background": "#{{base00-hex}}",
-    "panel.border": "#{{base02-hex}}",
-    "terminal.background": "#{{base00-hex}}",
+    "statusBar.noFolderBackground": "#{{base00-hex}}",
+    "tab.activeBackground": "#{{base02-hex}}",
+    "tab.activeForeground": "#{{base05-hex}}",
+    "tab.activeBorderTop": "#{{base0D-hex}}",
+    "tab.border": "#{{base00-hex}}",
+    "tab.inactiveBackground": "#{{base00-hex}}",
+    "tab.inactiveForeground": "#{{base04-hex}}",
+    "tab.unfocusedActiveBackground": "#{{base01-hex}}",
+    "tab.unfocusedInactiveBackground": "#{{base00-hex}}",
+    "terminal.background": "#{{base02-hex}}",
     "terminal.foreground": "#{{base05-hex}}",
-    "terminalCursor.foreground": "#{{base05-hex}}",
-    "terminal.ansiBlack": "#{{base00-hex}}",
-    "terminal.ansiRed": "#{{base08-hex}}",
-    "terminal.ansiGreen": "#{{base0B-hex}}",
-    "terminal.ansiYellow": "#{{base0A-hex}}",
-    "terminal.ansiBlue": "#{{base0D-hex}}",
-    "terminal.ansiMagenta": "#{{base0E-hex}}",
-    "terminal.ansiCyan": "#{{base0C-hex}}",
-    "terminal.ansiWhite": "#{{base05-hex}}",
-    "terminal.ansiBrightBlack": "#{{base03-hex}}",
-    "terminal.ansiBrightRed": "#{{base08-hex}}",
-    "terminal.ansiBrightGreen": "#{{base0B-hex}}",
-    "terminal.ansiBrightYellow": "#{{base09-hex}}",
-    "terminal.ansiBrightBlue": "#{{base0D-hex}}",
-    "terminal.ansiBrightMagenta": "#{{base0E-hex}}",
-    "terminal.ansiBrightCyan": "#{{base0C-hex}}",
-    "terminal.ansiBrightWhite": "#{{base07-hex}}"
+    "terminalCursor.foreground": "#{{base06-hex}}",
+    "terminal.selectionBackground": "#{{base03-hex}}",
+    "terminal.inactiveSelectionBackground": "#{{base03-hex}}88",
+    "terminal.ansiBlack": "#{{terminal-black-hex}}",
+    "terminal.ansiRed": "#{{terminal-red-hex}}",
+    "terminal.ansiGreen": "#{{terminal-green-hex}}",
+    "terminal.ansiYellow": "#{{terminal-yellow-hex}}",
+    "terminal.ansiBlue": "#{{terminal-blue-hex}}",
+    "terminal.ansiMagenta": "#{{terminal-magenta-hex}}",
+    "terminal.ansiCyan": "#{{terminal-cyan-hex}}",
+    "terminal.ansiWhite": "#{{terminal-white-hex}}",
+    "terminal.ansiBrightBlack": "#{{terminal-bright-black-hex}}",
+    "terminal.ansiBrightRed": "#{{terminal-bright-red-hex}}",
+    "terminal.ansiBrightGreen": "#{{terminal-bright-green-hex}}",
+    "terminal.ansiBrightYellow": "#{{terminal-bright-yellow-hex}}",
+    "terminal.ansiBrightBlue": "#{{terminal-bright-blue-hex}}",
+    "terminal.ansiBrightMagenta": "#{{terminal-bright-magenta-hex}}",
+    "terminal.ansiBrightCyan": "#{{terminal-bright-cyan-hex}}",
+    "terminal.ansiBrightWhite": "#{{terminal-bright-white-hex}}",
+    "titleBar.activeBackground": "#{{base01-hex}}",
+    "titleBar.activeForeground": "#{{base06-hex}}",
+    "titleBar.inactiveBackground": "#{{base00-hex}}",
+    "titleBar.inactiveForeground": "#{{base04-hex}}"
   },
   "tokenColors": [
     {
@@ -54,9 +132,15 @@
       }
     },
     {
-      "scope": ["string", "constant.other.symbol"],
+      "scope": ["string", "constant.other.symbol", "entity.other.inherited-class"],
       "settings": {
         "foreground": "#{{base0B-hex}}"
+      }
+    },
+    {
+      "scope": ["constant.numeric", "constant.language", "constant.character", "constant.other"],
+      "settings": {
+        "foreground": "#{{base09-hex}}"
       }
     },
     {
@@ -66,15 +150,45 @@
       }
     },
     {
-      "scope": ["entity.name.function", "support.function"],
+      "scope": ["keyword.operator", "punctuation"],
+      "settings": {
+        "foreground": "#{{base05-hex}}"
+      }
+    },
+    {
+      "scope": ["entity.name.function", "support.function", "variable.function"],
       "settings": {
         "foreground": "#{{base0D-hex}}"
       }
     },
     {
-      "scope": ["constant.numeric", "constant.language"],
+      "scope": ["entity.name.type", "entity.name.class", "support.class", "support.type"],
       "settings": {
-        "foreground": "#{{base09-hex}}"
+        "foreground": "#{{base0A-hex}}"
+      }
+    },
+    {
+      "scope": ["entity.name.tag", "meta.tag"],
+      "settings": {
+        "foreground": "#{{base08-hex}}"
+      }
+    },
+    {
+      "scope": ["entity.other.attribute-name"],
+      "settings": {
+        "foreground": "#{{base0C-hex}}"
+      }
+    },
+    {
+      "scope": ["variable.parameter"],
+      "settings": {
+        "foreground": "#{{base0F-hex}}"
+      }
+    },
+    {
+      "scope": ["variable", "meta.definition.variable"],
+      "settings": {
+        "foreground": "#{{base05-hex}}"
       }
     },
     {
