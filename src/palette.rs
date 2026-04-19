@@ -94,6 +94,68 @@ impl Color {
             ratio,
         )
     }
+
+    pub fn to_hsl(self) -> (f32, f32, f32) {
+        let r = self.r as f32 / 255.0;
+        let g = self.g as f32 / 255.0;
+        let b = self.b as f32 / 255.0;
+        let max = r.max(g).max(b);
+        let min = r.min(g).min(b);
+        let l = (max + min) / 2.0;
+
+        if (max - min).abs() < f32::EPSILON {
+            return (0.0, 0.0, l);
+        }
+
+        let d = max - min;
+        let s = d / (1.0 - (2.0 * l - 1.0).abs());
+        let h = if (max - r).abs() < f32::EPSILON {
+            60.0 * (((g - b) / d).rem_euclid(6.0))
+        } else if (max - g).abs() < f32::EPSILON {
+            60.0 * (((b - r) / d) + 2.0)
+        } else {
+            60.0 * (((r - g) / d) + 4.0)
+        };
+
+        (h, s, l)
+    }
+
+    pub fn from_hsl(h: f32, s: f32, l: f32) -> Self {
+        let h = h.rem_euclid(360.0);
+        let s = s.clamp(0.0, 1.0);
+        let l = l.clamp(0.0, 1.0);
+        let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
+        let x = c * (1.0 - (((h / 60.0).rem_euclid(2.0)) - 1.0).abs());
+        let m = l - c / 2.0;
+
+        let (r1, g1, b1) = match h {
+            h if h < 60.0 => (c, x, 0.0),
+            h if h < 120.0 => (x, c, 0.0),
+            h if h < 180.0 => (0.0, c, x),
+            h if h < 240.0 => (0.0, x, c),
+            h if h < 300.0 => (x, 0.0, c),
+            _ => (c, 0.0, x),
+        };
+
+        Self {
+            r: ((r1 + m) * 255.0).round() as u8,
+            g: ((g1 + m) * 255.0).round() as u8,
+            b: ((b1 + m) * 255.0).round() as u8,
+        }
+    }
+
+    pub fn luminance(self) -> f32 {
+        let channel = |v: u8| {
+            let c = v as f32 / 255.0;
+            if c <= 0.04045 {
+                c / 12.92
+            } else {
+                ((c + 0.055) / 1.055).powf(2.4)
+            }
+        };
+
+        0.2126 * channel(self.r) + 0.7152 * channel(self.g) + 0.0722 * channel(self.b)
+    }
 }
 
 #[derive(Debug)]
@@ -116,6 +178,7 @@ impl Palette {
         let background = Color::parse(&parsed.special.background)?;
         let foreground = Color::parse(&parsed.special.foreground)?;
         let cursor = Color::parse(&parsed.special.cursor)?;
+        let dark_background = background.luminance() < 0.3;
 
         let mut base16 = BTreeMap::new();
         base16.insert("base00", background);
@@ -126,14 +189,78 @@ impl Palette {
         base16.insert("base05", foreground);
         base16.insert("base06", foreground.lighten(0.08));
         base16.insert("base07", foreground.lighten(0.16));
-        base16.insert("base08", Color::parse(&parsed.colors.color1)?);
-        base16.insert("base09", Color::parse(&parsed.colors.color9)?);
-        base16.insert("base0A", Color::parse(&parsed.colors.color3)?);
-        base16.insert("base0B", Color::parse(&parsed.colors.color2)?);
-        base16.insert("base0C", Color::parse(&parsed.colors.color6)?);
-        base16.insert("base0D", Color::parse(&parsed.colors.color4)?);
-        base16.insert("base0E", Color::parse(&parsed.colors.color5)?);
-        base16.insert("base0F", Color::parse(&parsed.colors.color11)?);
+        base16.insert(
+            "base08",
+            semantic_accent(
+                Color::parse(&parsed.colors.color1)?,
+                dark_background,
+                350.0,
+                0.64,
+            ),
+        );
+        base16.insert(
+            "base09",
+            semantic_accent(
+                Color::parse(&parsed.colors.color9)?,
+                dark_background,
+                28.0,
+                0.70,
+            ),
+        );
+        base16.insert(
+            "base0A",
+            semantic_accent(
+                Color::parse(&parsed.colors.color3)?,
+                dark_background,
+                55.0,
+                0.68,
+            ),
+        );
+        base16.insert(
+            "base0B",
+            semantic_accent(
+                Color::parse(&parsed.colors.color2)?,
+                dark_background,
+                145.0,
+                0.60,
+            ),
+        );
+        base16.insert(
+            "base0C",
+            semantic_accent(
+                Color::parse(&parsed.colors.color6)?,
+                dark_background,
+                190.0,
+                0.66,
+            ),
+        );
+        base16.insert(
+            "base0D",
+            semantic_accent(
+                Color::parse(&parsed.colors.color4)?,
+                dark_background,
+                220.0,
+                0.64,
+            ),
+        );
+        base16.insert(
+            "base0E",
+            semantic_accent(
+                Color::parse(&parsed.colors.color5)?,
+                dark_background,
+                280.0,
+                0.70,
+            ),
+        );
+        base16.insert(
+            "base0F",
+            semantic_accent(
+                Color::parse(&parsed.colors.color11)?,
+                dark_background,
+                18.0,
+                0.74,
+            ),
+        );
 
         Ok(Self {
             checksum: parsed
@@ -169,6 +296,33 @@ impl Palette {
         ctx.insert("foreground-hex".into(), self.foreground.hex());
         ctx
     }
+}
+
+fn semantic_accent(
+    color: Color,
+    dark_background: bool,
+    target_hue: f32,
+    target_lightness: f32,
+) -> Color {
+    let (hue, saturation, lightness) = color.to_hsl();
+    let min_saturation = if dark_background { 0.40 } else { 0.34 };
+    let adjusted_lightness = if dark_background {
+        lightness.max(target_lightness)
+    } else {
+        lightness.min(target_lightness)
+    };
+    let adjusted_hue = blend_hue(hue, target_hue, 0.78);
+
+    Color::from_hsl(
+        adjusted_hue,
+        saturation.max(min_saturation),
+        adjusted_lightness,
+    )
+}
+
+fn blend_hue(source: f32, target: f32, ratio: f32) -> f32 {
+    let delta = ((target - source + 540.0).rem_euclid(360.0)) - 180.0;
+    (source + delta * ratio).rem_euclid(360.0)
 }
 
 pub fn render_template(template: &str, values: &BTreeMap<String, String>) -> String {
