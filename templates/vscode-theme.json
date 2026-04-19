@@ -1,0 +1,88 @@
+{
+  "name": "Walbridge",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#{{base00-hex}}",
+    "editor.foreground": "#{{base05-hex}}",
+    "editorLineNumber.foreground": "#{{base03-hex}}",
+    "editorLineNumber.activeForeground": "#{{base05-hex}}",
+    "editorCursor.foreground": "#{{base05-hex}}",
+    "editor.selectionBackground": "#{{base02-hex}}",
+    "editor.inactiveSelectionBackground": "#{{base01-hex}}",
+    "editorIndentGuide.background1": "#{{base01-hex}}",
+    "editorIndentGuide.activeBackground1": "#{{base03-hex}}",
+    "activityBar.background": "#{{base01-hex}}",
+    "activityBar.foreground": "#{{base05-hex}}",
+    "activityBarBadge.background": "#{{base0D-hex}}",
+    "activityBarBadge.foreground": "#{{base00-hex}}",
+    "sideBar.background": "#{{base01-hex}}",
+    "sideBar.foreground": "#{{base05-hex}}",
+    "titleBar.activeBackground": "#{{base01-hex}}",
+    "titleBar.activeForeground": "#{{base05-hex}}",
+    "titleBar.inactiveBackground": "#{{base00-hex}}",
+    "statusBar.background": "#{{base01-hex}}",
+    "statusBar.foreground": "#{{base05-hex}}",
+    "statusBar.debuggingBackground": "#{{base08-hex}}",
+    "statusBar.debuggingForeground": "#{{base00-hex}}",
+    "panel.background": "#{{base00-hex}}",
+    "panel.border": "#{{base02-hex}}",
+    "terminal.background": "#{{base00-hex}}",
+    "terminal.foreground": "#{{base05-hex}}",
+    "terminalCursor.foreground": "#{{base05-hex}}",
+    "terminal.ansiBlack": "#{{base00-hex}}",
+    "terminal.ansiRed": "#{{base08-hex}}",
+    "terminal.ansiGreen": "#{{base0B-hex}}",
+    "terminal.ansiYellow": "#{{base0A-hex}}",
+    "terminal.ansiBlue": "#{{base0D-hex}}",
+    "terminal.ansiMagenta": "#{{base0E-hex}}",
+    "terminal.ansiCyan": "#{{base0C-hex}}",
+    "terminal.ansiWhite": "#{{base05-hex}}",
+    "terminal.ansiBrightBlack": "#{{base03-hex}}",
+    "terminal.ansiBrightRed": "#{{base08-hex}}",
+    "terminal.ansiBrightGreen": "#{{base0B-hex}}",
+    "terminal.ansiBrightYellow": "#{{base09-hex}}",
+    "terminal.ansiBrightBlue": "#{{base0D-hex}}",
+    "terminal.ansiBrightMagenta": "#{{base0E-hex}}",
+    "terminal.ansiBrightCyan": "#{{base0C-hex}}",
+    "terminal.ansiBrightWhite": "#{{base07-hex}}"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": {
+        "foreground": "#{{base03-hex}}"
+      }
+    },
+    {
+      "scope": ["string", "constant.other.symbol"],
+      "settings": {
+        "foreground": "#{{base0B-hex}}"
+      }
+    },
+    {
+      "scope": ["keyword", "storage", "storage.type"],
+      "settings": {
+        "foreground": "#{{base0E-hex}}"
+      }
+    },
+    {
+      "scope": ["entity.name.function", "support.function"],
+      "settings": {
+        "foreground": "#{{base0D-hex}}"
+      }
+    },
+    {
+      "scope": ["constant.numeric", "constant.language"],
+      "settings": {
+        "foreground": "#{{base09-hex}}"
+      }
+    },
+    {
+      "scope": ["invalid"],
+      "settings": {
+        "foreground": "#{{base00-hex}}",
+        "background": "#{{base08-hex}}"
+      }
+    }
+  ]
+}
