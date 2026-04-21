@@ -182,6 +182,7 @@ pub struct Palette {
     pub cursor: Color,
     pub background: Color,
     pub foreground: Color,
+    terminal: TerminalPalette,
     base16: BTreeMap<&'static str, Color>,
 }
 
@@ -307,6 +308,8 @@ impl Palette {
             ),
         );
 
+        let terminal = build_terminal_palette(&base16, neutral_ramp[0], neutral_ramp[5]);
+
         Ok(Self {
             checksum: parsed
                 .checksum
@@ -315,6 +318,7 @@ impl Palette {
             cursor,
             background: neutral_ramp[0],
             foreground: neutral_ramp[5],
+            terminal,
             base16,
         })
     }
@@ -366,28 +370,7 @@ impl Palette {
     }
 
     pub fn terminal_palette(&self) -> TerminalPalette {
-        TerminalPalette {
-            normal: [
-                self.color("base01"),
-                self.color("base08"),
-                self.color("base0B"),
-                self.color("base0A"),
-                self.color("base0D"),
-                self.color("base0E"),
-                self.color("base0C"),
-                self.color("base04").mix(self.color("base05"), 0.35),
-            ],
-            bright: [
-                self.color("base03"),
-                terminal_bright(self.color("base08")),
-                terminal_bright(self.color("base0B")),
-                terminal_bright(self.color("base0A")),
-                terminal_bright(self.color("base0D")),
-                terminal_bright(self.color("base0E")),
-                terminal_bright(self.color("base0C")),
-                self.color("base06"),
-            ],
-        }
+        self.terminal
     }
 }
 
@@ -527,6 +510,144 @@ fn terminal_bright(color: Color) -> Color {
     )
 }
 
+fn build_terminal_palette(
+    base16: &BTreeMap<&'static str, Color>,
+    background: Color,
+    foreground: Color,
+) -> TerminalPalette {
+    let base01 = *base16.get("base01").expect("missing base01");
+    let base03 = *base16.get("base03").expect("missing base03");
+    let base05 = *base16.get("base05").expect("missing base05");
+    let base06 = *base16.get("base06").expect("missing base06");
+    let base08 = *base16.get("base08").expect("missing base08");
+    let base0a = *base16.get("base0A").expect("missing base0A");
+    let base0b = *base16.get("base0B").expect("missing base0B");
+    let base0c = *base16.get("base0C").expect("missing base0C");
+    let base0d = *base16.get("base0D").expect("missing base0D");
+    let base0e = *base16.get("base0E").expect("missing base0E");
+
+    let normal = [
+        terminal_neutral(base01, base0c, background, 0.08, 0.10),
+        terminal_role(base08, 350.0, 0.82, 0.70, background),
+        terminal_role(base0b, 132.0, 0.70, 0.72, background),
+        terminal_role(base0a, 58.0, 0.78, 0.74, background),
+        terminal_role(base0d, 220.0, 0.82, 0.73, background),
+        terminal_role(base0e, 282.0, 0.76, 0.74, background),
+        terminal_role(base0c, 188.0, 0.72, 0.74, background),
+        terminal_neutral(base05, base0d, background, 0.06, 0.84),
+    ];
+
+    let bright = [
+        terminal_neutral(base03, base0d, background, 0.10, 0.30),
+        terminal_bright_role(base08, 350.0, 0.88, 0.77, background),
+        terminal_bright_role(base0b, 132.0, 0.76, 0.79, background),
+        terminal_bright_role(base0a, 58.0, 0.84, 0.80, background),
+        terminal_bright_role(base0d, 220.0, 0.88, 0.80, background),
+        terminal_bright_role(base0e, 282.0, 0.84, 0.80, background),
+        terminal_bright_role(base0c, 188.0, 0.78, 0.80, background),
+        terminal_neutral(base06, base0c, background, 0.04, 0.88),
+    ];
+
+    let mut palette = TerminalPalette { normal, bright };
+    enforce_terminal_palette_invariants(&mut palette, background, foreground);
+    palette
+}
+
+fn terminal_role(
+    color: Color,
+    target_hue: f32,
+    target_saturation: f32,
+    target_lightness: f32,
+    background: Color,
+) -> Color {
+    let (hue, saturation, lightness) = color.to_hsl();
+    let hue_ratio = if saturation < 0.24 { 0.98 } else { 0.92 };
+    let candidate = Color::from_hsl(
+        blend_hue(hue, target_hue, hue_ratio),
+        mix_value(saturation, target_saturation, 0.82).clamp(target_saturation - 0.08, 0.98),
+        mix_value(lightness, target_lightness, 0.84)
+            .clamp(target_lightness - 0.05, target_lightness + 0.04),
+    );
+
+    ensure_contrast(candidate, background, target_lightness + 0.06, 3.4)
+}
+
+fn terminal_bright_role(
+    color: Color,
+    target_hue: f32,
+    target_saturation: f32,
+    target_lightness: f32,
+    background: Color,
+) -> Color {
+    terminal_bright(terminal_role(
+        color,
+        target_hue,
+        target_saturation,
+        target_lightness,
+        background,
+    ))
+}
+
+fn terminal_neutral(
+    neutral: Color,
+    tint: Color,
+    background: Color,
+    tint_ratio: f32,
+    target_lightness: f32,
+) -> Color {
+    let tinted = neutral.mix(tint, tint_ratio);
+    let (hue, saturation, _) = tinted.to_hsl();
+    ensure_contrast(
+        Color::from_hsl(hue, saturation.clamp(0.05, 0.18), target_lightness),
+        background,
+        target_lightness + 0.06,
+        3.1,
+    )
+}
+
+fn ensure_contrast(
+    color: Color,
+    background: Color,
+    fallback_lightness: f32,
+    min_contrast: f32,
+) -> Color {
+    if color.contrast_ratio(background) >= min_contrast {
+        return color;
+    }
+
+    let (hue, saturation, lightness) = color.to_hsl();
+    let lightness = lightness.max(fallback_lightness).clamp(0.0, 0.92);
+    Color::from_hsl(hue, saturation, lightness)
+}
+
+fn enforce_terminal_palette_invariants(
+    palette: &mut TerminalPalette,
+    background: Color,
+    foreground: Color,
+) {
+    if palette.normal[0].hex() == background.hex() {
+        palette.normal[0] = terminal_neutral(
+            palette.normal[0].lighten(0.04),
+            palette.normal[6],
+            background,
+            0.04,
+            0.12,
+        );
+    }
+
+    if palette.bright[0].hex() == palette.normal[0].hex() {
+        palette.bright[0] = palette.normal[0].lighten(0.12);
+    }
+
+    if palette.normal[7].hex() == foreground.hex() {
+        palette.normal[7] = terminal_neutral(foreground, palette.normal[4], background, 0.05, 0.80);
+    }
+
+    if palette.bright[7].hex() == palette.normal[7].hex() {
+        palette.bright[7] = palette.normal[7].lighten(0.08);
+    }
+}
+
 pub fn render_template(template: &str, values: &BTreeMap<String, String>) -> String {
     values
         .iter()
@@ -538,6 +659,7 @@ pub fn render_template(template: &str, values: &BTreeMap<String, String>) -> Str
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{fs, path::PathBuf};
 
     #[test]
     fn mixes_colors() {
@@ -554,5 +676,104 @@ mod tests {
             render_template("color = #{{base00-hex}}", &values),
             "color = #112233"
         );
+    }
+
+    #[test]
+    fn terminal_palette_stays_separated_for_muddy_inputs() {
+        let palette = sample_palette();
+        let terminal = palette.terminal_palette();
+
+        assert_ne!(terminal.normal[0].hex(), palette.background.hex());
+        assert_ne!(terminal.bright[0].hex(), terminal.normal[0].hex());
+        assert_ne!(terminal.normal[7].hex(), palette.foreground.hex());
+        assert_ne!(terminal.bright[7].hex(), terminal.normal[7].hex());
+
+        for color in terminal.normal[1..7]
+            .iter()
+            .chain(terminal.bright[1..7].iter())
+        {
+            let (_, saturation, _) = color.to_hsl();
+            assert!(
+                saturation >= 0.45,
+                "expected saturated terminal role, got {}",
+                color.hex()
+            );
+            assert!(
+                color.contrast_ratio(palette.background) >= 3.0,
+                "expected terminal role to stand off from background: {}",
+                color.hex()
+            );
+        }
+    }
+
+    #[test]
+    fn render_context_includes_terminal_role_keys() {
+        let palette = sample_palette();
+        let ctx = palette.render_context();
+
+        for key in [
+            "terminal-black-hex",
+            "terminal-red-hex",
+            "terminal-green-hex",
+            "terminal-yellow-hex",
+            "terminal-blue-hex",
+            "terminal-magenta-hex",
+            "terminal-cyan-hex",
+            "terminal-white-hex",
+            "terminal-bright-black-hex",
+            "terminal-bright-red-hex",
+            "terminal-bright-green-hex",
+            "terminal-bright-yellow-hex",
+            "terminal-bright-blue-hex",
+            "terminal-bright-magenta-hex",
+            "terminal-bright-cyan-hex",
+            "terminal-bright-white-hex",
+        ] {
+            assert!(ctx.contains_key(key), "missing render context key {key}");
+        }
+    }
+
+    fn sample_palette() -> Palette {
+        let json = r##"{
+            "checksum": "sample",
+            "wallpaper": "/tmp/green.jpg",
+            "special": {
+                "background": "#19190a",
+                "foreground": "#c5c5c1",
+                "cursor": "#c5c5c1"
+            },
+            "colors": {
+                "color0": "#19190a",
+                "color1": "#7d7885",
+                "color2": "#7e88a2",
+                "color3": "#818dad",
+                "color4": "#8c92a4",
+                "color5": "#8794b1",
+                "color6": "#9a9daf",
+                "color7": "#98988e",
+                "color8": "#6e6e59",
+                "color9": "#A7A1B2",
+                "color10": "#A8B6D9",
+                "color11": "#ACBDE7",
+                "color12": "#BBC3DB",
+                "color13": "#B4C6EC",
+                "color14": "#CED2EA",
+                "color15": "#c5c5c1"
+            }
+        }"##;
+
+        let path = unique_test_path("walbridge-palette-sample.json");
+        fs::write(&path, json).expect("failed to write sample palette");
+        let palette = Palette::from_file(&path).expect("failed to parse sample palette");
+        let _ = fs::remove_file(path);
+        palette
+    }
+
+    fn unique_test_path(name: &str) -> PathBuf {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock drift")
+            .as_nanos();
+        std::env::temp_dir().join(format!("{nanos}-{name}"))
     }
 }

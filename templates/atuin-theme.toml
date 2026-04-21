@@ -1,0 +1,13 @@
+[theme]
+name = "walbridge"
+parent = "default"
+
+[colors]
+AlertInfo = "#{{terminal-green-hex}}"
+AlertWarn = "#{{terminal-yellow-hex}}"
+AlertError = "#{{terminal-red-hex}}"
+Annotation = "#{{terminal-bright-black-hex}}"
+Guidance = "#{{terminal-cyan-hex}}"
+Important = "#{{terminal-bright-magenta-hex}}"
+Title = "#{{terminal-bright-blue-hex}}"
+Muted = "#{{base04-hex}}"

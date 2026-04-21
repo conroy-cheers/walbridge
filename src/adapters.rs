@@ -69,6 +69,7 @@ pub fn apply_all(ctx: &ApplyContext, palette: &Palette) -> Vec<AdapterStatus> {
         ("wezterm", apply_wezterm),
         ("starship", apply_starship),
         ("fish", apply_fish),
+        ("atuin", apply_atuin),
         ("ghostty", apply_ghostty),
         ("bat", apply_bat),
         ("vscode", apply_vscode),
@@ -328,6 +329,28 @@ fn apply_fish(ctx: &ApplyContext, palette: &Palette) -> Result<AdapterStatus> {
         note: Some(
             "Generated a Fish theme snippet. New Fish shells will source it automatically.".into(),
         ),
+        error: None,
+    })
+}
+
+fn apply_atuin(ctx: &ApplyContext, palette: &Palette) -> Result<AdapterStatus> {
+    let theme_path = ctx.config_dir.join("atuin/themes/walbridge.toml");
+
+    write_text(
+        &theme_path,
+        &render_template(
+            include_str!("../templates/atuin-theme.toml"),
+            &palette.render_context(),
+        ),
+    )?;
+
+    Ok(AdapterStatus {
+        name: "atuin".into(),
+        apply_mode: ApplyMode::Restart,
+        success: true,
+        paths: vec![theme_path.display().to_string()],
+        note: Some("Generated a walbridge Atuin theme. Atuin will use it once configured with `theme.name = \"walbridge\"`."
+            .into()),
         error: None,
     })
 }
@@ -832,7 +855,10 @@ fn write_text(path: &Path, content: &str) -> Result<()> {
 
     match fs::write(path, content) {
         Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+        Err(error)
+            if error.kind() == std::io::ErrorKind::PermissionDenied
+                || error.raw_os_error() == Some(30) =>
+        {
             fs::remove_file(path)
                 .with_context(|| format!("failed to replace read-only `{}`", path.display()))?;
             fs::write(path, content)
