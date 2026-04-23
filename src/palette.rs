@@ -445,17 +445,19 @@ fn derive_neutral_ramp(
     };
 
     if dark_background {
-        let base00 = harmonized_surface(
-            background,
-            neutral_hue,
-            neutral_saturation,
-            bg_l.max(0.08).min(0.11),
-            0.36,
-        )
-        .darken(0.03);
-        let base01 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.14, 0.52);
-        let base02 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.19, 0.68);
-        let base03 = harmonized_surface(background, neutral_hue, neutral_saturation, 0.31, 0.84);
+        let shadow_hue = blend_hue(bg_h, anchor_h, 0.84);
+        let shadow_saturation = mix_value(bg_s, anchor_s.min(0.34), 0.34).clamp(0.07, 0.16);
+        let shadow_lightness = bg_l.clamp(0.055, 0.072);
+        let shadow_background =
+            Color::from_hsl(shadow_hue, shadow_saturation, shadow_lightness);
+
+        let base00 = shadow_background;
+        let base01 =
+            harmonized_surface(shadow_background, neutral_hue, neutral_saturation, 0.14, 0.46);
+        let base02 =
+            harmonized_surface(shadow_background, neutral_hue, neutral_saturation, 0.19, 0.64);
+        let base03 =
+            harmonized_surface(shadow_background, neutral_hue, neutral_saturation, 0.31, 0.82);
         let target_foreground = Color::from_hsl(
             neutral_hue,
             (neutral_saturation * 0.48).clamp(0.05, 0.14),
@@ -704,6 +706,26 @@ mod tests {
                 color.hex()
             );
         }
+    }
+
+    #[test]
+    fn dark_background_avoids_olive_mud() {
+        let palette = sample_palette();
+        let (hue, saturation, lightness) = palette.background.to_hsl();
+
+        assert_eq!(palette.background.hex(), "0f1314");
+        assert!(
+            (160.0..=230.0).contains(&hue),
+            "expected cool shadow hue, got {hue}"
+        );
+        assert!(
+            saturation <= 0.18,
+            "expected restrained background saturation, got {saturation}"
+        );
+        assert!(
+            lightness <= 0.08,
+            "expected terminal background to stay dark, got {lightness}"
+        );
     }
 
     #[test]
