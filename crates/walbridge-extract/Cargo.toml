@@ -1,0 +1,26 @@
+[package]
+name = "walbridge-extract"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "walbridge_extract"
+path = "src/lib.rs"
+
+[[bin]]
+name = "walbridge-extract"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
+rand_chacha = "0.3"
+sha2 = "0.11"
+toml = { version = "1", default-features = false, features = ["parse", "serde"] }
+
+[dev-dependencies]
+tempfile = "3.15"

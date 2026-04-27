@@ -19,15 +19,21 @@
         system:
         let
           pkgs = import nixpkgs { inherit system; };
+          workspaceSrc = pkgs.lib.cleanSource ./.;
+          cargoLock = { lockFile = ./Cargo.lock; };
         in
         rec {
-          default =
+          default = walbridge;
+
+          walbridge =
             let
               unwrapped = pkgs.rustPlatform.buildRustPackage {
                 pname = "walbridge";
                 version = "0.1.0";
-                src = pkgs.lib.cleanSource ./.;
-                cargoLock.lockFile = ./Cargo.lock;
+                src = workspaceSrc;
+                inherit cargoLock;
+                cargoBuildFlags = [ "-p" "walbridge" ];
+                cargoTestFlags = [ "-p" "walbridge" ];
                 meta.mainProgram = "walbridge";
               };
             in
@@ -47,7 +53,97 @@
               meta.mainProgram = "walbridge";
             };
 
-          walbridge = default;
+          walbridge-extract = pkgs.rustPlatform.buildRustPackage {
+            pname = "walbridge-extract";
+            version = "0.1.0";
+            src = workspaceSrc;
+            inherit cargoLock;
+            cargoBuildFlags = [ "-p" "walbridge-extract" ];
+            cargoTestFlags = [ "-p" "walbridge-extract" ];
+            meta.mainProgram = "walbridge-extract";
+          };
+
+          walbridge-visualize =
+            let
+              runtimeLibs = with pkgs; [
+                wayland
+                libxkbcommon
+                libGL
+                fontconfig
+                vulkan-loader
+                xorg.libX11
+                xorg.libXcursor
+                xorg.libXi
+                xorg.libXrandr
+              ];
+              unwrapped = pkgs.rustPlatform.buildRustPackage {
+                pname = "walbridge-visualize";
+                version = "0.1.0";
+                src = workspaceSrc;
+                inherit cargoLock;
+                cargoBuildFlags = [ "-p" "walbridge-visualize" ];
+                cargoTestFlags = [ "-p" "walbridge-visualize" ];
+                nativeBuildInputs = [ pkgs.pkg-config ];
+                buildInputs = runtimeLibs;
+                meta.mainProgram = "walbridge-visualize";
+              };
+            in
+            pkgs.symlinkJoin {
+              name = "walbridge-visualize-0.1.0";
+              paths = [ unwrapped ];
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              postBuild = ''
+                wrapProgram $out/bin/walbridge-visualize \
+                  --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeLibs}
+              '';
+              meta.mainProgram = "walbridge-visualize";
+            };
+        }
+      );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          runtimeLibs = with pkgs; [
+            wayland
+            libxkbcommon
+            libGL
+            fontconfig
+            vulkan-loader
+            xorg.libX11
+            xorg.libXcursor
+            xorg.libXi
+            xorg.libXrandr
+          ];
+        in
+        {
+          default = pkgs.mkShell {
+            nativeBuildInputs = with pkgs; [
+              rustc
+              cargo
+              rustfmt
+              clippy
+              rust-analyzer
+              pkg-config
+            ];
+            buildInputs = runtimeLibs ++ (with pkgs; [
+              glib
+              bat
+              adw-gtk3
+              gsettings-desktop-schemas
+            ]);
+
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath runtimeLibs;
+            RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+            WALBRIDGE_GTK_BASE_THEME_NAME = "adw-gtk3-dark";
+            WALBRIDGE_GTK3_BASE_CSS = "${pkgs.adw-gtk3}/share/themes/adw-gtk3-dark/gtk-3.0/gtk.css";
+            WALBRIDGE_GTK4_BASE_CSS = "${pkgs.adw-gtk3}/share/themes/adw-gtk3-dark/gtk-4.0/gtk.css";
+
+            shellHook = ''
+              export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}''${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+            '';
+          };
         }
       );
     };

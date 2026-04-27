@@ -1,13 +1,17 @@
-[package]
-name = "walbridge"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [
+    "crates/walbridge",
+    "crates/walbridge-extract",
+    "crates/walbridge-visualize",
+]
 
-[dependencies]
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+
+[workspace.dependencies]
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-
-[dev-dependencies]
-tempfile = "3.15"

@@ -1,0 +1,17 @@
+[package]
+name = "walbridge-visualize"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "walbridge-visualize"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+walbridge-extract = { path = "../walbridge-extract" }
+eframe = { version = "0.34", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
+egui = "0.34"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "pollster"] }
