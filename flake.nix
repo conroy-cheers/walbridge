@@ -71,10 +71,10 @@
                 libGL
                 fontconfig
                 vulkan-loader
-                xorg.libX11
-                xorg.libXcursor
-                xorg.libXi
-                xorg.libXrandr
+                libx11
+                libxcursor
+                libxi
+                libxrandr
               ];
               unwrapped = pkgs.rustPlatform.buildRustPackage {
                 pname = "walbridge-visualize";
@@ -111,10 +111,10 @@
             libGL
             fontconfig
             vulkan-loader
-            xorg.libX11
-            xorg.libXcursor
-            xorg.libXi
-            xorg.libXrandr
+            libx11
+            libxcursor
+            libxi
+            libxrandr
           ];
         in
         {
