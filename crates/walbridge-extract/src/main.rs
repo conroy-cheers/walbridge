@@ -7,18 +7,18 @@ use walbridge_extract::{config::Config, extract, output};
 #[command(
     author,
     version,
-    about = "Extract a palette from an image, emit pywal-compatible colors.json plus a richer palette.json"
+    about = "Extract a palette from an image and write the selected output formats"
 )]
 struct Cli {
     /// Wallpaper / source image.
     #[arg(long)]
     image: PathBuf,
-    /// Where to write pywal-compatible colors.json.
-    #[arg(long, default_value = "~/.cache/wal/colors.json")]
-    colors_out: String,
-    /// Where to write the richer palette.json.
-    #[arg(long, default_value = "~/.cache/wal/palette.json")]
-    palette_out: String,
+    /// Where to write pywal-compatible colors.json. Used with palette.json by default when no output is selected.
+    #[arg(long)]
+    colors_out: Option<String>,
+    /// Where to write the richer palette.json. Used with colors.json by default when no output is selected.
+    #[arg(long)]
+    palette_out: Option<String>,
     /// Optionally write a deterministic Tint-compatible Base16 scheme.
     #[arg(long)]
     base16_out: Option<String>,
@@ -44,21 +44,34 @@ fn run() -> Result<()> {
 
     let extraction = extract::extract(&cli.image, &cfg)?;
 
-    let colors_out = expand_tilde(&cli.colors_out);
-    let palette_out = expand_tilde(&cli.palette_out);
+    let use_default_outputs =
+        cli.colors_out.is_none() && cli.palette_out.is_none() && cli.base16_out.is_none();
+    let colors_out = cli
+        .colors_out
+        .as_deref()
+        .map(expand_tilde)
+        .or_else(|| use_default_outputs.then(|| expand_tilde("~/.cache/wal/colors.json")));
+    let palette_out = cli
+        .palette_out
+        .as_deref()
+        .map(expand_tilde)
+        .or_else(|| use_default_outputs.then(|| expand_tilde("~/.cache/wal/palette.json")));
 
-    output::write_colors_json(&colors_out, &extraction)?;
-    output::write_palette_json(&palette_out, &extraction)?;
+    if let Some(colors_out) = colors_out.as_deref() {
+        output::write_colors_json(colors_out, &extraction)?;
+    }
+    if let Some(palette_out) = palette_out.as_deref() {
+        output::write_palette_json(palette_out, &extraction)?;
+    }
     if let Some(base16_out) = cli.base16_out.as_deref() {
-        let palette = walbridge::palette::Palette::from_file(&colors_out)?;
+        let palette = output::palette(&extraction);
         output::write_base16_yaml(&expand_tilde(base16_out), &palette)?;
     }
 
     let bg = extraction.background.srgb;
     let fg = extraction.foreground.srgb;
     println!(
-        "wrote {} ({} clusters, {} blacklisted)  bg={} fg={}",
-        colors_out.display(),
+        "extracted palette ({} clusters, {} blacklisted)  bg={} fg={}",
         extraction.clusters.len(),
         extraction
             .clusters

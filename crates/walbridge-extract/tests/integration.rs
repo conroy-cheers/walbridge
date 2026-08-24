@@ -3,8 +3,8 @@
 //! selected background lands outside the forbidden region.
 
 use image::{ImageBuffer, Rgb};
+use std::process::Command;
 use tempfile::NamedTempFile;
-use walbridge::palette::Palette;
 use walbridge_extract::{color::Srgb, config::Config, extract, output};
 
 fn write_test_image(path: &std::path::Path) {
@@ -81,14 +81,12 @@ fn extraction_is_deterministic_for_same_image() {
 fn base16_output_is_complete_and_deterministic() {
     let tmp = tempfile::tempdir().unwrap();
     let img_path = tmp.path().join("image.png");
-    let colors_path = tmp.path().join("colors.json");
     let first_path = tmp.path().join("first.yaml");
     let second_path = tmp.path().join("second.yaml");
     write_test_image(&img_path);
 
     let extraction = extract::extract(&img_path, &Config::default()).unwrap();
-    output::write_colors_json(&colors_path, &extraction).unwrap();
-    let palette = Palette::from_file(&colors_path).unwrap();
+    let palette = output::palette(&extraction);
     output::write_base16_yaml(&first_path, &palette).unwrap();
     output::write_base16_yaml(&second_path, &palette).unwrap();
 
@@ -102,6 +100,32 @@ fn base16_output_is_complete_and_deterministic() {
             first.contains(&format!("  base{index:02X}: \"#")),
             "missing Base16 slot base{index:02X}\n{first}",
         );
+    }
+}
+
+#[test]
+fn stylix_palette_generator_writes_the_native_protocol() {
+    let tmp = tempfile::tempdir().unwrap();
+    let image_path = tmp.path().join("image.png");
+    let output_path = tmp.path().join("palette.json");
+    write_test_image(&image_path);
+
+    let status = Command::new(env!("CARGO_BIN_EXE_palette-generator"))
+        .args(["dark"])
+        .arg(&image_path)
+        .arg(&output_path)
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    let generated: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_slice(&std::fs::read(output_path).unwrap()).unwrap();
+    assert_eq!(generated.len(), 16);
+    for index in 0..16 {
+        let key = format!("base{index:02X}");
+        let color = generated.get(&key).unwrap().as_str().unwrap();
+        assert_eq!(color.len(), 6, "invalid {key}: {color}");
+        assert!(color.chars().all(|c| c.is_ascii_hexdigit()));
     }
 }
 

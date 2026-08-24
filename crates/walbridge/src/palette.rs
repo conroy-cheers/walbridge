@@ -176,6 +176,19 @@ pub struct TerminalPalette {
 }
 
 #[derive(Debug)]
+pub struct PaletteInput {
+    pub checksum: String,
+    pub wallpaper: String,
+    pub cursor: Color,
+    pub background: Color,
+    pub foreground: Color,
+    /// Red, green, yellow, blue, magenta, and cyan.
+    pub accents: [Color; 6],
+    /// Bright variants in the same order as `accents`.
+    pub bright_accents: [Color; 6],
+}
+
+#[derive(Debug)]
 pub struct Palette {
     pub checksum: String,
     pub wallpaper: String,
@@ -190,26 +203,71 @@ impl Palette {
     pub fn from_file(path: &Path) -> Result<Self> {
         let raw = fs::read_to_string(path)
             .with_context(|| format!("failed to read palette file `{}`", path.display()))?;
-        let parsed: WalData = serde_json::from_str(&raw)
-            .with_context(|| format!("failed to parse palette file `{}`", path.display()))?;
+        Self::from_json(&raw)
+            .with_context(|| format!("failed to parse palette file `{}`", path.display()))
+    }
+
+    pub fn from_json(raw: &str) -> Result<Self> {
+        let parsed: WalData = serde_json::from_str(raw).context("failed to parse palette JSON")?;
 
         let background = Color::parse(&parsed.special.background)?;
         let foreground = Color::parse(&parsed.special.foreground)?;
         let cursor = Color::parse(&parsed.special.cursor)?;
-        let dark_background = background.luminance() < 0.3;
-        let accent_seeds = [
+        let checksum = parsed
+            .checksum
+            .unwrap_or_else(|| format!("{}-{}", parsed.wallpaper, background.hex()));
+        let accents = [
             Color::parse(&parsed.colors.color1)?,
             Color::parse(&parsed.colors.color2)?,
             Color::parse(&parsed.colors.color3)?,
             Color::parse(&parsed.colors.color4)?,
             Color::parse(&parsed.colors.color5)?,
             Color::parse(&parsed.colors.color6)?,
+        ];
+        let bright_accents = [
             Color::parse(&parsed.colors.color9)?,
             Color::parse(&parsed.colors.color10)?,
             Color::parse(&parsed.colors.color11)?,
             Color::parse(&parsed.colors.color12)?,
             Color::parse(&parsed.colors.color13)?,
             Color::parse(&parsed.colors.color14)?,
+        ];
+
+        Ok(Self::from_input(PaletteInput {
+            checksum,
+            wallpaper: parsed.wallpaper,
+            cursor,
+            background,
+            foreground,
+            accents,
+            bright_accents,
+        }))
+    }
+
+    pub fn from_input(input: PaletteInput) -> Self {
+        let PaletteInput {
+            checksum,
+            wallpaper,
+            cursor,
+            background,
+            foreground,
+            accents,
+            bright_accents,
+        } = input;
+        let dark_background = background.luminance() < 0.3;
+        let accent_seeds = [
+            accents[0],
+            accents[1],
+            accents[2],
+            accents[3],
+            accents[4],
+            accents[5],
+            bright_accents[0],
+            bright_accents[1],
+            bright_accents[2],
+            bright_accents[3],
+            bright_accents[4],
+            bright_accents[5],
         ];
         let neutral_ramp = derive_neutral_ramp(
             background,
@@ -229,98 +287,48 @@ impl Palette {
         base16.insert("base07", neutral_ramp[7]);
         base16.insert(
             "base08",
-            semantic_accent(
-                Color::parse(&parsed.colors.color1)?,
-                dark_background,
-                350.0,
-                0.72,
-                0.73,
-            ),
+            semantic_accent(accents[0], dark_background, 350.0, 0.72, 0.73),
         );
         base16.insert(
             "base09",
-            semantic_accent(
-                Color::parse(&parsed.colors.color9)?,
-                dark_background,
-                28.0,
-                0.78,
-                0.72,
-            ),
+            semantic_accent(bright_accents[0], dark_background, 28.0, 0.78, 0.72),
         );
         base16.insert(
             "base0A",
-            semantic_accent(
-                Color::parse(&parsed.colors.color3)?,
-                dark_background,
-                55.0,
-                0.76,
-                0.78,
-            ),
+            semantic_accent(accents[2], dark_background, 55.0, 0.76, 0.78),
         );
         base16.insert(
             "base0B",
-            semantic_accent(
-                Color::parse(&parsed.colors.color2)?,
-                dark_background,
-                135.0,
-                0.58,
-                0.74,
-            ),
+            semantic_accent(accents[1], dark_background, 135.0, 0.58, 0.74),
         );
         base16.insert(
             "base0C",
-            semantic_accent(
-                Color::parse(&parsed.colors.color6)?,
-                dark_background,
-                182.0,
-                0.60,
-                0.74,
-            ),
+            semantic_accent(accents[5], dark_background, 182.0, 0.60, 0.74),
         );
         base16.insert(
             "base0D",
-            semantic_accent(
-                Color::parse(&parsed.colors.color4)?,
-                dark_background,
-                218.0,
-                0.82,
-                0.75,
-            ),
+            semantic_accent(accents[3], dark_background, 218.0, 0.82, 0.75),
         );
         base16.insert(
             "base0E",
-            semantic_accent(
-                Color::parse(&parsed.colors.color5)?,
-                dark_background,
-                268.0,
-                0.78,
-                0.78,
-            ),
+            semantic_accent(accents[4], dark_background, 268.0, 0.78, 0.78),
         );
         base16.insert(
             "base0F",
-            semantic_accent(
-                Color::parse(&parsed.colors.color11)?,
-                dark_background,
-                12.0,
-                0.58,
-                0.80,
-            ),
+            semantic_accent(bright_accents[2], dark_background, 12.0, 0.58, 0.80),
         );
 
         let terminal = build_terminal_palette(&base16, neutral_ramp[0], neutral_ramp[5]);
 
-        Ok(Self {
-            checksum: parsed
-                .checksum
-                .unwrap_or_else(|| format!("{}-{}", parsed.wallpaper, background.hex())),
-            wallpaper: parsed.wallpaper,
+        Self {
+            checksum,
+            wallpaper,
             cursor,
             background: neutral_ramp[0],
             foreground: neutral_ramp[5],
             terminal,
             base16,
-        })
+        }
     }
 
     pub fn color(&self, key: &str) -> Color {

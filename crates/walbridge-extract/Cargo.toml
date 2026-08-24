@@ -11,6 +11,10 @@ path = "src/lib.rs"
 name = "walbridge-extract"
 path = "src/main.rs"
 
+[[bin]]
+name = "palette-generator"
+path = "src/stylix.rs"
+
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true

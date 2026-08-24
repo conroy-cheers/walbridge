@@ -7,10 +7,11 @@ use crate::{
 use anyhow::{Context, Result};
 use serde::Serialize;
 use std::{
+    collections::BTreeMap,
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
-use walbridge::palette::Palette;
+use walbridge::palette::{Color, Palette, PaletteInput};
 
 /// Bright variant: bump lightness a bit while preserving hue/chroma.
 fn brighten(color: Oklab) -> Oklab {
@@ -54,7 +55,7 @@ struct PywalColorSlots {
     color15: String,
 }
 
-pub fn write_colors_json(path: &Path, extraction: &Extraction) -> Result<()> {
+fn pywal_colors(extraction: &Extraction) -> PywalColors {
     // Accents in pywal order: color1..color6 = red, green, yellow, blue, magenta, cyan.
     let a = &extraction.accents;
     let bg = extraction.background.srgb;
@@ -62,7 +63,7 @@ pub fn write_colors_json(path: &Path, extraction: &Extraction) -> Result<()> {
 
     let bright = |c: Srgb| brighten(c.to_oklab()).to_srgb();
 
-    let pywal = PywalColors {
+    PywalColors {
         checksum: short_checksum(&extraction.image_checksum),
         wallpaper: extraction.image_path.clone(),
         alpha: "100".into(),
@@ -89,8 +90,38 @@ pub fn write_colors_json(path: &Path, extraction: &Extraction) -> Result<()> {
             color14: bright(a[5].srgb).hex_with_hash(),
             color15: bright(fg).hex_with_hash(),
         },
-    };
-    write_json(path, &pywal)
+    }
+}
+
+pub fn write_colors_json(path: &Path, extraction: &Extraction) -> Result<()> {
+    write_json(path, &pywal_colors(extraction))
+}
+
+fn palette_color(color: Srgb) -> Color {
+    Color {
+        r: color.r,
+        g: color.g,
+        b: color.b,
+    }
+}
+
+pub fn palette(extraction: &Extraction) -> Palette {
+    let brighten = |color: Srgb| brighten(color.to_oklab()).to_srgb();
+    Palette::from_input(PaletteInput {
+        checksum: short_checksum(&extraction.image_checksum),
+        wallpaper: extraction.image_path.clone(),
+        cursor: palette_color(extraction.cursor.srgb),
+        background: palette_color(extraction.background.srgb),
+        foreground: palette_color(extraction.foreground.srgb),
+        accents: extraction
+            .accents
+            .each_ref()
+            .map(|accent| palette_color(accent.srgb)),
+        bright_accents: extraction
+            .accents
+            .each_ref()
+            .map(|accent| palette_color(brighten(accent.srgb))),
+    })
 }
 
 fn short_checksum(full: &str) -> String {
@@ -230,6 +261,15 @@ pub fn write_base16_yaml(path: &Path, palette: &Palette) -> Result<()> {
     }
 
     std::fs::write(path, contents).with_context(|| format!("failed to write `{}`", path.display()))
+}
+
+/// Write the flat Base16 JSON protocol consumed by Stylix's palette generator.
+pub fn write_stylix_json(path: &Path, palette: &Palette) -> Result<()> {
+    let colors: BTreeMap<_, _> = palette
+        .base16_colors()
+        .map(|(name, color)| (name, color.hex()))
+        .collect();
+    write_json(path, &colors)
 }
 
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {

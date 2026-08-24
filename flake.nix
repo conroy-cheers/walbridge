@@ -63,6 +63,11 @@
             meta.mainProgram = "walbridge-extract";
           };
 
+          stylix-palette-generator = walbridge-extract.overrideAttrs {
+            pname = "walbridge-stylix-palette-generator";
+            meta.mainProgram = "palette-generator";
+          };
+
           walbridge-visualize =
             let
               runtimeLibs = with pkgs; [
