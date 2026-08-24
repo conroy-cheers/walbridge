@@ -4,7 +4,8 @@
 
 use image::{ImageBuffer, Rgb};
 use tempfile::NamedTempFile;
-use walbridge_extract::{color::Srgb, config::Config, extract};
+use walbridge::palette::Palette;
+use walbridge_extract::{color::Srgb, config::Config, extract, output};
 
 fn write_test_image(path: &std::path::Path) {
     // 60% olive-mud, 30% cool dark navy, 10% light neutral.
@@ -74,6 +75,34 @@ fn extraction_is_deterministic_for_same_image() {
     }
 
     std::fs::remove_file(&img_path).ok();
+}
+
+#[test]
+fn base16_output_is_complete_and_deterministic() {
+    let tmp = tempfile::tempdir().unwrap();
+    let img_path = tmp.path().join("image.png");
+    let colors_path = tmp.path().join("colors.json");
+    let first_path = tmp.path().join("first.yaml");
+    let second_path = tmp.path().join("second.yaml");
+    write_test_image(&img_path);
+
+    let extraction = extract::extract(&img_path, &Config::default()).unwrap();
+    output::write_colors_json(&colors_path, &extraction).unwrap();
+    let palette = Palette::from_file(&colors_path).unwrap();
+    output::write_base16_yaml(&first_path, &palette).unwrap();
+    output::write_base16_yaml(&second_path, &palette).unwrap();
+
+    let first = std::fs::read_to_string(first_path).unwrap();
+    let second = std::fs::read_to_string(second_path).unwrap();
+    assert_eq!(first, second);
+    assert!(first.contains("system: \"base16\""));
+    assert!(first.contains("variant: \"dark\""));
+    for index in 0..16 {
+        assert!(
+            first.contains(&format!("  base{index:02X}: \"#")),
+            "missing Base16 slot base{index:02X}\n{first}",
+        );
+    }
 }
 
 #[test]

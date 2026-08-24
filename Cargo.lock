@@ -2816,6 +2816,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "toml",
+ "walbridge",
 ]
 
 [[package]]

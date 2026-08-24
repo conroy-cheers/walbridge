@@ -11,12 +11,7 @@ pub struct Cluster {
     pub count: usize,
 }
 
-pub fn kmeans(
-    samples: &[Oklab],
-    k: usize,
-    iterations: usize,
-    seed: u64,
-) -> Vec<Cluster> {
+pub fn kmeans(samples: &[Oklab], k: usize, iterations: usize, seed: u64) -> Vec<Cluster> {
     assert!(!samples.is_empty(), "kmeans: no samples");
     let k = k.min(samples.len());
     let mut rng = ChaCha8Rng::seed_from_u64(seed);

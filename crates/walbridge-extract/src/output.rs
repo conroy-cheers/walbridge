@@ -6,7 +6,11 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use serde::Serialize;
-use std::{path::Path, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
+use walbridge::palette::Palette;
 
 /// Bright variant: bump lightness a bit while preserving hue/chroma.
 fn brighten(color: Oklab) -> Oklab {
@@ -205,13 +209,35 @@ pub fn write_palette_json(path: &Path, extraction: &Extraction) -> Result<()> {
     write_json(path, &rich)
 }
 
+/// Write the canonical Walbridge palette as a deterministic Tint-compatible
+/// Base16 scheme for consumers such as Stylix.
+pub fn write_base16_yaml(path: &Path, palette: &Palette) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create `{}`", parent.display()))?;
+    }
+
+    let mut contents =
+        String::from("system: \"base16\"\nname: \"Walbridge\"\nauthor: \"walbridge-extract\"\n");
+    contents.push_str(if palette.is_dark() {
+        "variant: \"dark\"\n"
+    } else {
+        "variant: \"light\"\n"
+    });
+    contents.push_str("palette:\n");
+    for (name, color) in palette.base16_colors() {
+        contents.push_str(&format!("  {name}: \"{}\"\n", color.hashtag()));
+    }
+
+    std::fs::write(path, contents).with_context(|| format!("failed to write `{}`", path.display()))
+}
+
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("failed to create `{}`", parent.display()))?;
     }
     let bytes = serde_json::to_vec_pretty(value)?;
-    std::fs::write(path, bytes)
-        .with_context(|| format!("failed to write `{}`", path.display()))?;
+    std::fs::write(path, bytes).with_context(|| format!("failed to write `{}`", path.display()))?;
     Ok(())
 }

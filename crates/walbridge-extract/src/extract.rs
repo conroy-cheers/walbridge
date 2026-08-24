@@ -72,7 +72,11 @@ const ACCENT_TARGETS: [(&str, f32); 6] = [
 /// Angular distance between two hue angles in degrees, 0..180.
 fn hue_delta(a: f32, b: f32) -> f32 {
     let d = (a - b).abs() % 360.0;
-    if d > 180.0 { 360.0 - d } else { d }
+    if d > 180.0 {
+        360.0 - d
+    } else {
+        d
+    }
 }
 
 pub fn extract(image_path: &Path, config: &Config) -> Result<Extraction> {
@@ -109,7 +113,14 @@ pub fn extract(image_path: &Path, config: &Config) -> Result<Extraction> {
 
     let samples: Vec<Oklab> = rgb
         .pixels()
-        .map(|p| Srgb { r: p[0], g: p[1], b: p[2] }.to_oklab())
+        .map(|p| {
+            Srgb {
+                r: p[0],
+                g: p[1],
+                b: p[2],
+            }
+            .to_oklab()
+        })
         .collect();
 
     let clusters = kmeans(
@@ -158,7 +169,11 @@ pub fn extract(image_path: &Path, config: &Config) -> Result<Extraction> {
     let mut applied: Vec<String> = config
         .blacklist
         .iter()
-        .filter(|r| ranked.iter().any(|c| c.rejected_by.as_deref() == Some(r.name.as_str())))
+        .filter(|r| {
+            ranked
+                .iter()
+                .any(|c| c.rejected_by.as_deref() == Some(r.name.as_str()))
+        })
         .map(|r| r.name.clone())
         .collect();
     applied.sort();
@@ -270,8 +285,7 @@ fn pick_accent(
             let score = |c: &RankedCluster| {
                 let hue_err = hue_delta(c.oklab.hue_deg(), target_hue);
                 // Penalty for being below the min chroma.
-                let chroma_pen =
-                    (cfg.min_accent_chroma - c.oklab.chroma()).max(0.0) * 200.0;
+                let chroma_pen = (cfg.min_accent_chroma - c.oklab.chroma()).max(0.0) * 200.0;
                 // Reward weight mildly.
                 hue_err + chroma_pen - c.weight * 20.0
             };
@@ -285,7 +299,10 @@ fn pick_accent(
         if hue_err > 35.0 {
             let from = c.oklab.hue_deg();
             adjusted = adjusted.with_hue(target_hue);
-            mutation = Mutation::HueRotate { from, to: target_hue };
+            mutation = Mutation::HueRotate {
+                from,
+                to: target_hue,
+            };
         }
         if adjusted.chroma() < cfg.min_accent_chroma {
             let from = adjusted.chroma();
@@ -293,7 +310,10 @@ fn pick_accent(
             // Preserve earlier hue-rotate if one happened; record whichever
             // mutation is the most informative.
             if matches!(mutation, Mutation::None) {
-                mutation = Mutation::ChromaBoost { from, to: cfg.min_accent_chroma };
+                mutation = Mutation::ChromaBoost {
+                    from,
+                    to: cfg.min_accent_chroma,
+                };
             }
         }
         return Ok(Assignment {

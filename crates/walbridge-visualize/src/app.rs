@@ -221,15 +221,11 @@ fn draw_image_preview(ui: &mut Ui, texture: Option<&TextureHandle>) {
     }
 }
 
-fn load_image_as_texture(
-    ctx: &egui::Context,
-    path: &Path,
-) -> anyhow::Result<TextureHandle> {
+fn load_image_as_texture(ctx: &egui::Context, path: &Path) -> anyhow::Result<TextureHandle> {
     use anyhow::Context as _;
-    let bytes = std::fs::read(path)
-        .with_context(|| format!("read `{}`", path.display()))?;
-    let img = image::load_from_memory(&bytes)
-        .with_context(|| format!("decode `{}`", path.display()))?;
+    let bytes = std::fs::read(path).with_context(|| format!("read `{}`", path.display()))?;
+    let img =
+        image::load_from_memory(&bytes).with_context(|| format!("decode `{}`", path.display()))?;
     // Cap at ~1200px longest edge — preview only, saves VRAM.
     let max_edge = 1200u32;
     let (w, h) = (img.width(), img.height());
@@ -250,7 +246,11 @@ fn load_image_as_texture(
 }
 
 fn draw_extraction_summary(ui: &mut Ui, ex: &Extraction) {
-    let rejected = ex.clusters.iter().filter(|c| c.rejected_by.is_some()).count();
+    let rejected = ex
+        .clusters
+        .iter()
+        .filter(|c| c.rejected_by.is_some())
+        .count();
     ui.label(
         RichText::new(format!(
             "{} clusters · {} rejected",
@@ -481,8 +481,7 @@ fn cluster_list(ui: &mut Ui, clusters: &[RankedCluster]) {
 
     for (idx, c) in clusters.iter().enumerate() {
         let row_width = ui.available_width();
-        let (rect, response) =
-            ui.allocate_exact_size(Vec2::new(row_width, row_h), Sense::hover());
+        let (rect, response) = ui.allocate_exact_size(Vec2::new(row_width, row_h), Sense::hover());
 
         let mut x = rect.min.x;
         let mid_y = rect.center().y;
@@ -491,7 +490,8 @@ fn cluster_list(ui: &mut Ui, clusters: &[RankedCluster]) {
         let sw = 28.0;
         let sh = 18.0;
         let sw_rect = Rect::from_min_size(Pos2::new(x, mid_y - sh / 2.0), Vec2::new(sw, sh));
-        ui.painter().rect_filled(sw_rect, 3.0, color32_from_srgb(c.srgb));
+        ui.painter()
+            .rect_filled(sw_rect, 3.0, color32_from_srgb(c.srgb));
         ui.painter().rect_stroke(
             sw_rect,
             CornerRadius::same(3),
@@ -517,8 +517,11 @@ fn cluster_list(ui: &mut Ui, clusters: &[RankedCluster]) {
                         ui.visuals().text_color()
                     }
                 });
-        ui.painter()
-            .galley(Pos2::new(x, mid_y - galley.size().y / 2.0), galley, Color32::WHITE);
+        ui.painter().galley(
+            Pos2::new(x, mid_y - galley.size().y / 2.0),
+            galley,
+            Color32::WHITE,
+        );
         x += 140.0;
 
         // Percent, monospace.
@@ -537,11 +540,12 @@ fn cluster_list(ui: &mut Ui, clusters: &[RankedCluster]) {
 
         // Bar.
         let bar_available = (rect.max.x - x - 8.0).min(bar_max).max(40.0);
-        let bar_rect = Rect::from_min_size(Pos2::new(x, mid_y - 4.0), Vec2::new(bar_available, 8.0));
-        ui.painter().rect_filled(bar_rect, 2.0, Color32::from_gray(40));
+        let bar_rect =
+            Rect::from_min_size(Pos2::new(x, mid_y - 4.0), Vec2::new(bar_available, 8.0));
+        ui.painter()
+            .rect_filled(bar_rect, 2.0, Color32::from_gray(40));
         let filled_w = bar_rect.width() * c.weight.clamp(0.0, 1.0);
-        let filled_rect =
-            Rect::from_min_size(bar_rect.min, Vec2::new(filled_w, bar_rect.height()));
+        let filled_rect = Rect::from_min_size(bar_rect.min, Vec2::new(filled_w, bar_rect.height()));
         let bar_color = if c.rejected_by.is_some() {
             Color32::from_rgb(180, 70, 70)
         } else {
@@ -565,10 +569,7 @@ fn cluster_list(ui: &mut Ui, clusters: &[RankedCluster]) {
         }
 
         let tip = if let Some(reason) = &c.rejected_by {
-            format!(
-                "{hex} · {:.1}% · rejected: {reason}",
-                c.weight * 100.0
-            )
+            format!("{hex} · {:.1}% · rejected: {reason}", c.weight * 100.0)
         } else {
             format!("{hex} · {:.1}%", c.weight * 100.0)
         };

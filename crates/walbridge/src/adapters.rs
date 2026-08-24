@@ -1,4 +1,3 @@
-use crate::palette::{render_template, Palette};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
+use walbridge::palette::{render_template, Palette};
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]

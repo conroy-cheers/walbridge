@@ -327,6 +327,14 @@ impl Palette {
         *self.base16.get(key).expect("missing base16 color")
     }
 
+    pub fn is_dark(&self) -> bool {
+        self.background.luminance() < 0.3
+    }
+
+    pub fn base16_colors(&self) -> impl Iterator<Item = (&'static str, Color)> + '_ {
+        self.base16.iter().map(|(name, color)| (*name, *color))
+    }
+
     pub fn render_context(&self) -> BTreeMap<String, String> {
         let mut ctx = BTreeMap::new();
         let terminal = self.terminal_palette();
@@ -448,16 +456,30 @@ fn derive_neutral_ramp(
         let shadow_hue = blend_hue(bg_h, anchor_h, 0.84);
         let shadow_saturation = mix_value(bg_s, anchor_s.min(0.34), 0.34).clamp(0.07, 0.16);
         let shadow_lightness = bg_l.clamp(0.055, 0.072);
-        let shadow_background =
-            Color::from_hsl(shadow_hue, shadow_saturation, shadow_lightness);
+        let shadow_background = Color::from_hsl(shadow_hue, shadow_saturation, shadow_lightness);
 
         let base00 = shadow_background;
-        let base01 =
-            harmonized_surface(shadow_background, neutral_hue, neutral_saturation, 0.14, 0.46);
-        let base02 =
-            harmonized_surface(shadow_background, neutral_hue, neutral_saturation, 0.19, 0.64);
-        let base03 =
-            harmonized_surface(shadow_background, neutral_hue, neutral_saturation, 0.31, 0.82);
+        let base01 = harmonized_surface(
+            shadow_background,
+            neutral_hue,
+            neutral_saturation,
+            0.14,
+            0.46,
+        );
+        let base02 = harmonized_surface(
+            shadow_background,
+            neutral_hue,
+            neutral_saturation,
+            0.19,
+            0.64,
+        );
+        let base03 = harmonized_surface(
+            shadow_background,
+            neutral_hue,
+            neutral_saturation,
+            0.31,
+            0.82,
+        );
         let target_foreground = Color::from_hsl(
             neutral_hue,
             (neutral_saturation * 0.48).clamp(0.05, 0.14),

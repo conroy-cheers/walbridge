@@ -19,6 +19,9 @@ struct Cli {
     /// Where to write the richer palette.json.
     #[arg(long, default_value = "~/.cache/wal/palette.json")]
     palette_out: String,
+    /// Optionally write a deterministic Tint-compatible Base16 scheme.
+    #[arg(long)]
+    base16_out: Option<String>,
     /// Override config path. Falls back to $XDG_CONFIG_HOME/walbridge/extract.toml.
     #[arg(long)]
     config: Option<PathBuf>,
@@ -46,6 +49,10 @@ fn run() -> Result<()> {
 
     output::write_colors_json(&colors_out, &extraction)?;
     output::write_palette_json(&palette_out, &extraction)?;
+    if let Some(base16_out) = cli.base16_out.as_deref() {
+        let palette = walbridge::palette::Palette::from_file(&colors_out)?;
+        output::write_base16_yaml(&expand_tilde(base16_out), &palette)?;
+    }
 
     let bg = extraction.background.srgb;
     let fg = extraction.foreground.srgb;

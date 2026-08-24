@@ -81,7 +81,11 @@ impl Oklab {
     }
 
     pub fn with_lightness(self, l: f32) -> Self {
-        Self { l, a: self.a, b: self.b }
+        Self {
+            l,
+            a: self.a,
+            b: self.b,
+        }
     }
 
     /// Rotate hue to `target_deg`, preserving L and chroma.
@@ -99,10 +103,18 @@ impl Oklab {
         let c = self.chroma();
         if c < f32::EPSILON {
             // No hue defined; bias toward a-axis so scaling has an effect.
-            return Self { l: self.l, a: new_chroma, b: 0.0 };
+            return Self {
+                l: self.l,
+                a: new_chroma,
+                b: 0.0,
+            };
         }
         let k = new_chroma / c;
-        Self { l: self.l, a: self.a * k, b: self.b * k }
+        Self {
+            l: self.l,
+            a: self.a * k,
+            b: self.b * k,
+        }
     }
 }
 

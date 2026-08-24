@@ -1,12 +1,10 @@
 mod adapters;
 mod inventory;
-mod palette;
 
 use adapters::{AdapterStatus, ApplyContext};
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use inventory::stylix_inventory;
-use palette::Palette;
 use serde::{Deserialize, Serialize};
 use std::{
     fs,
@@ -14,6 +12,7 @@ use std::{
     process::ExitCode,
     time::{SystemTime, UNIX_EPOCH},
 };
+use walbridge::palette::Palette;
 
 #[derive(Parser)]
 #[command(

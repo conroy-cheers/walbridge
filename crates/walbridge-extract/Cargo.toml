@@ -21,6 +21,7 @@ rand = { version = "0.8", default-features = false, features = ["std", "std_rng"
 rand_chacha = "0.3"
 sha2 = "0.11"
 toml = { version = "1", default-features = false, features = ["parse", "serde"] }
+walbridge = { path = "../walbridge" }
 
 [dev-dependencies]
 tempfile = "3.15"
